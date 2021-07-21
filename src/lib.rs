@@ -1,27 +1,11 @@
 extern crate readpassphrase_sys;
 
+use std::ops::BitOr;
+
 use readpassphrase_sys as ffi;
 
-const REQUIRE_TTY_FORCE_LOWER: u32 = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER;
-const REQUIRE_TTY_FORCE_LOWER_SEVENBIT: u32 = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER | ffi::RPP_SEVENBIT;
-const REQUIRE_TTY_FORCE_UPPER: u32 = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER;
-const REQUIRE_TTY_FORCE_UPPER_SEVENBIT: u32 = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER | ffi::RPP_SEVENBIT;
-const REQUIRE_TTY_SEVENBIT: u32 = ffi::RPP_REQUIRE_TTY | ffi::RPP_SEVENBIT;
-const ECHO_ON_REQUIRE_TTY: u32 = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY;
-const ECHO_ON_REQUIRE_TTY_FORCE_LOWER: u32 = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER;
-const ECHO_ON_REQUIRE_TTY_FORCE_LOWER_SEVENBIT: u32 = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER | ffi::RPP_SEVENBIT;
-const ECHO_ON_REQUIRE_TTY_FORCE_UPPER: u32 = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER;
-const ECHO_ON_REQUIRE_TTY_FORCE_UPPER_SEVENBIT: u32 = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER | ffi::RPP_SEVENBIT;
-const ECHO_ON_REQUIRE_TTY_SEVENBIT: u32 = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_SEVENBIT;
-const ECHO_ON_SEVENBIT: u32 = ffi::RPP_ECHO_ON | ffi::RPP_SEVENBIT;
-const STDIN_FORCE_LOWER: u32 = ffi::RPP_STDIN | ffi::RPP_FORCELOWER;
-const STDIN_FORCE_LOWER_SEVENBIT: u32 = ffi::RPP_STDIN | ffi::RPP_FORCELOWER | ffi::RPP_SEVENBIT;
-const STDIN_FORCE_UPPER: u32 = ffi::RPP_STDIN | ffi::RPP_FORCEUPPER;
-const STDIN_FORCE_UPPER_SEVENBIT: u32 = ffi::RPP_STDIN | ffi::RPP_FORCEUPPER | ffi::RPP_SEVENBIT;
-const STDIN_SEVENBIT: u32 = ffi::RPP_STDIN | ffi::RPP_SEVENBIT;
-
 /// Flags argument able to bitwise OR zero or more flags
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
 pub enum Flags {
     /// Turn off echo (default behavior)
@@ -38,63 +22,44 @@ pub enum Flags {
     SevenBit = ffi::RPP_SEVENBIT,
     /// Read passphrase from stdin; ignore prompt
     StdIn = ffi::RPP_STDIN,
-    /// Turn echo off, require TTY, and force input to lower case
-    RequireTtyForceLower = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER,
-    /// Turn echo off, require TTY, and force input to upper case
-    RequireTtyForceUpper = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER,
-    /// Turn echo off, require TTY, force input to lower case, and strip high bit from input
-    RequireTtyForceLowerSevenBit = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER | ffi::RPP_SEVENBIT,
-    /// Turn echo off, require TTY, force input to upper case, and strip high bit from input
-    RequireTtyForceUpperSevenBit = ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER | ffi::RPP_SEVENBIT,
-    /// Turn echo off, require TTY, and strip high bit from input
-    RequireTtySevenBit = ffi::RPP_REQUIRE_TTY | ffi::RPP_SEVENBIT,
-    EchoOnRequireTty = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY,
-    /// Turn echo on, require TTY, and force input to lower case
-    EchoOnRequireTtyForceLower = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER,
-    /// Turn echo on, require TTY, and force input to upper case
-    EchoOnRequireTtyForceUpper = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER,
-    /// Turn echo on, require TTY, force input to lower case, and strip high bit from input
-    EchoOnRequireTtyForceLowerSevenBit = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCELOWER | ffi::RPP_SEVENBIT,
-    /// Turn echo on, require TTY, force input to upper case, and strip high bit from input
-    EchoOnRequireTtyForceUpperSevenBit = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_FORCEUPPER | ffi::RPP_SEVENBIT,
-    /// Turn echo on, require TTY, and strip high bit from input
-    EchoOnRequireTtySevenBit = ffi::RPP_ECHO_ON | ffi::RPP_REQUIRE_TTY | ffi::RPP_SEVENBIT,
-    /// Turn echo on and strip high bit from input
-    EchoOnSevenBit = ffi::RPP_ECHO_ON | ffi::RPP_SEVENBIT,
-    /// Use stdin and force input to lower case
-    StdInForceLower = ffi::RPP_STDIN | ffi::RPP_FORCELOWER,
-    /// Use stdin and force input to upper case
-    StdInForceUpper = ffi::RPP_STDIN | ffi::RPP_FORCEUPPER,
-    /// Use stdin and strip high bit from input
-    StdInSevenBit = ffi::RPP_STDIN | ffi::RPP_SEVENBIT,
-    /// Use stdin, for input to lower case, and strip high bit from input
-    StdInForceLowerSevenBit = ffi::RPP_STDIN | ffi::RPP_FORCELOWER | ffi::RPP_SEVENBIT,
-    /// Use stdin, for input to upper case, and strip high bit from input
-    StdInForceUpperSevenBit = ffi::RPP_STDIN | ffi::RPP_FORCEUPPER | ffi::RPP_SEVENBIT,
 }
 
-impl From<u32> for Flags {
-    fn from(f: u32) -> Self {
-        match f {
-            REQUIRE_TTY_FORCE_LOWER => Self::RequireTtyForceLower,
-            REQUIRE_TTY_FORCE_LOWER_SEVENBIT => Self::RequireTtyForceLowerSevenBit,
-            REQUIRE_TTY_FORCE_UPPER => Self::RequireTtyForceUpper,
-            REQUIRE_TTY_FORCE_UPPER_SEVENBIT => Self::RequireTtyForceUpperSevenBit,
-            REQUIRE_TTY_SEVENBIT => Self::RequireTtySevenBit,
-            ECHO_ON_REQUIRE_TTY => Self::EchoOnRequireTty,
-            ECHO_ON_REQUIRE_TTY_FORCE_LOWER => Self::EchoOnRequireTtyForceLower,
-            ECHO_ON_REQUIRE_TTY_FORCE_LOWER_SEVENBIT => Self::EchoOnRequireTtyForceLowerSevenBit,
-            ECHO_ON_REQUIRE_TTY_FORCE_UPPER => Self::EchoOnRequireTtyForceUpper,
-            ECHO_ON_REQUIRE_TTY_FORCE_UPPER_SEVENBIT => Self::EchoOnRequireTtyForceUpperSevenBit,
-            ECHO_ON_REQUIRE_TTY_SEVENBIT => Self::EchoOnRequireTtySevenBit,
-            ECHO_ON_SEVENBIT => Self::EchoOnSevenBit,
-            STDIN_FORCE_LOWER => Self::StdInForceLower,
-            STDIN_FORCE_LOWER_SEVENBIT => Self::StdInForceLowerSevenBit,
-            STDIN_FORCE_UPPER => Self::StdInForceUpper,
-            STDIN_FORCE_UPPER_SEVENBIT => Self::StdInForceUpperSevenBit,
-            STDIN_SEVENBIT => Self::StdInSevenBit,
-            _ => panic!("invalid flag: {}", f),
-        }
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct FlagsOr(u32);
+
+impl From<Flags> for FlagsOr {
+    fn from(f: Flags) -> Self {
+        Self(f as u32)
+    }
+}
+
+impl BitOr for Flags {
+    type Output = FlagsOr;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        FlagsOr((self as u32) | (rhs as u32))
+    }
+}
+
+impl BitOr<Flags> for FlagsOr {
+    type Output = FlagsOr;
+
+    fn bitor(self, rhs: Flags) -> Self::Output {
+        Self(self.0 | rhs as u32)
+    }
+}
+
+impl BitOr for FlagsOr {
+    type Output = FlagsOr;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+impl From<FlagsOr> for u32 {
+    fn from(f: FlagsOr) -> Self {
+        f.0
     }
 }
 
@@ -124,13 +89,23 @@ impl From<std::ffi::NulError> for Error {
 /// readpassphrase displays the prompt on the standard error output and
 /// reads from the standard input. In this case it is generally not possible
 /// to turn off echo.
-pub fn readpassphrase(prompt: &str, buf_len: usize, flags: Flags) -> Result<String, Error> {
+///
+/// Example:
+///
+/// ```rust,no_run
+/// # use readpassphrase::{readpassphrase, Flags};
+/// let _pass = readpassphrase("Password:", 1024, Flags::RequireTty.into()).unwrap();
+/// /* or */
+///
+/// let _pass = readpassphrase("Password:", 1024, Flags::RequireTty | Flags::ForceLower).unwrap();
+/// ```
+pub fn readpassphrase(prompt: &str, buf_len: usize, flags: FlagsOr) -> Result<String, Error> {
     let prompt_ptr = std::ffi::CString::new(prompt)?.into_raw();
     let buf = vec![1u8; buf_len];
     let buf_ptr = std::ffi::CString::new(buf)?.into_raw();
     // safety: all the pointers are non-null, and flags are valid
     // On failure a null pointer is returned
-    let pass_ptr = unsafe { ffi::readpassphrase(prompt_ptr, buf_ptr, buf_len as i32, flags as u32 as i32) };
+    let pass_ptr = unsafe { ffi::readpassphrase(prompt_ptr, buf_ptr, buf_len as i32, u32::from(flags) as i32) };
 
     if pass_ptr == std::ptr::null_mut() {
         // safety: buf is non-null, and points to valid memory
@@ -159,6 +134,15 @@ pub fn readpassphrase(prompt: &str, buf_len: usize, flags: Flags) -> Result<Stri
 }
 
 /// Convenience function to securely clear a passphrase
+///
+/// Example:
+///
+/// ```rust
+/// # use readpassphrase::clear_passphrase;
+/// let mut passphrase = "super secret password".to_string();
+/// clear_passphrase(&mut passphrase);
+/// assert_eq!(passphrase.as_bytes(), [0; 21].as_ref());
+/// ```
 pub fn clear_passphrase(pass: &mut str) {
     let ptr = pass.as_mut_ptr();
     // safety: pass pointer is non-null, and points to valid memory
