@@ -11,4 +11,4 @@ repository = "https://github.com/orvij/readpassphrase"
 
 [dependencies]
 libc = "0.2.98"
-readpassphrase-sys = "0.0.1" 
+readpassphrase-sys = "0.0.3" 
