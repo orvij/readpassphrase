@@ -6,7 +6,7 @@ use readpassphrase_sys as ffi;
 
 /// Flags argument able to bitwise OR zero or more flags
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[repr(u32)]
+#[repr(i32)]
 pub enum Flags {
     /// Turn off echo (default behavior)
     EchoOff = ffi::RPP_ECHO_OFF,
@@ -24,12 +24,13 @@ pub enum Flags {
     StdIn = ffi::RPP_STDIN,
 }
 
+/// Wrapper type for bitwise OR-ed flags
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct FlagsOr(u32);
+pub struct FlagsOr(i32);
 
 impl From<Flags> for FlagsOr {
     fn from(f: Flags) -> Self {
-        Self(f as u32)
+        Self(f as i32)
     }
 }
 
@@ -37,7 +38,7 @@ impl BitOr for Flags {
     type Output = FlagsOr;
 
     fn bitor(self, rhs: Self) -> Self::Output {
-        FlagsOr((self as u32) | (rhs as u32))
+        FlagsOr((self as i32) | (rhs as i32))
     }
 }
 
@@ -45,7 +46,7 @@ impl BitOr<Flags> for FlagsOr {
     type Output = FlagsOr;
 
     fn bitor(self, rhs: Flags) -> Self::Output {
-        Self(self.0 | rhs as u32)
+        Self(self.0 | rhs as i32)
     }
 }
 
@@ -57,7 +58,7 @@ impl BitOr for FlagsOr {
     }
 }
 
-impl From<FlagsOr> for u32 {
+impl From<FlagsOr> for i32 {
     fn from(f: FlagsOr) -> Self {
         f.0
     }
@@ -96,7 +97,6 @@ impl From<std::ffi::NulError> for Error {
 /// # use readpassphrase::{readpassphrase, Flags};
 /// let _pass = readpassphrase("Password:", 1024, Flags::RequireTty.into()).unwrap();
 /// /* or */
-///
 /// let _pass = readpassphrase("Password:", 1024, Flags::RequireTty | Flags::ForceLower).unwrap();
 /// ```
 pub fn readpassphrase(prompt: &str, buf_len: usize, flags: FlagsOr) -> Result<String, Error> {
@@ -105,7 +105,7 @@ pub fn readpassphrase(prompt: &str, buf_len: usize, flags: FlagsOr) -> Result<St
     let buf_ptr = std::ffi::CString::new(buf)?.into_raw();
     // safety: all the pointers are non-null, and flags are valid
     // On failure a null pointer is returned
-    let pass_ptr = unsafe { ffi::readpassphrase(prompt_ptr, buf_ptr, buf_len as i32, u32::from(flags) as i32) };
+    let pass_ptr = unsafe { ffi::readpassphrase(prompt_ptr, buf_ptr, buf_len, flags.into()) };
 
     if pass_ptr == std::ptr::null_mut() {
         // safety: buf is non-null, and points to valid memory
@@ -155,41 +155,7 @@ mod tests {
 
     #[test]
     fn test_flags() {
-        // test that flags can be ORed together, and converted back to a Flag
-        let mut or_flag: Flags = ((Flags::EchoOn as u32) | (Flags::RequireTty as u32)).into(); 
-        assert_eq!(or_flag, Flags::EchoOnRequireTty);
-
-        or_flag = ((Flags::EchoOn as u32) | (Flags::RequireTty as u32) | (Flags::ForceLower as u32)).into();
-        assert_eq!(or_flag, Flags::EchoOnRequireTtyForceLower);
-
-        or_flag = ((Flags::EchoOn as u32) | (Flags::RequireTty as u32) | (Flags::ForceUpper as u32)).into();
-        assert_eq!(or_flag, Flags::EchoOnRequireTtyForceUpper);
-
-        or_flag = ((Flags::EchoOn as u32) | (Flags::RequireTty as u32) | (Flags::ForceLower as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::EchoOnRequireTtyForceLowerSevenBit);
-
-        or_flag = ((Flags::EchoOn as u32) | (Flags::RequireTty as u32) | (Flags::ForceUpper as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::EchoOnRequireTtyForceUpperSevenBit);
-
-        or_flag = ((Flags::EchoOn as u32) | (Flags::RequireTty as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::EchoOnRequireTtySevenBit);
-
-        or_flag = ((Flags::EchoOn as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::EchoOnSevenBit);
-
-        or_flag = ((Flags::RequireTty as u32) | (Flags::ForceLower as u32)).into();
-        assert_eq!(or_flag, Flags::RequireTtyForceLower);
-
-        or_flag = ((Flags::RequireTty as u32) | (Flags::ForceUpper as u32)).into();
-        assert_eq!(or_flag, Flags::RequireTtyForceUpper);
-
-        or_flag = ((Flags::RequireTty as u32) | (Flags::ForceLower as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::RequireTtyForceLowerSevenBit);
-
-        or_flag = ((Flags::RequireTty as u32) | (Flags::ForceUpper as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::RequireTtyForceUpperSevenBit);
-
-        or_flag = ((Flags::RequireTty as u32) | (Flags::SevenBit as u32)).into();
-        assert_eq!(or_flag, Flags::RequireTtySevenBit);
+        let orflags = Flags::RequireTty | Flags::SevenBit;
+        assert_eq!(orflags.0, (Flags::RequireTty as i32) | (Flags::SevenBit as i32));
     }
 }
